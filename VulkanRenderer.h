@@ -23,15 +23,13 @@
 #include <array>
 #include <chrono>
 #include <unordered_map>
+#include <string>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
-
-const std::string MODEL_PATH = "Resources/Models/Croissant/croissant_01_L0.obj";
-const std::string TEXTURE_PATH = "Resources/Models/Croissant/croissant_01_L0_BaseColor.png";
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -162,7 +160,21 @@ struct UniformBufferObject
 
 class VulkanRenderer {
 public:
+
     void run() {
+
+        std::cout << "Enter the path to the obj file (Leave blank for testing): " << std::endl;
+        std::getline(std::cin, modelPath);
+        std::cout << "Enter the path to the texture file (Leave blank for testing): " << std::endl;
+        std::getline(std::cin, texturePath);
+
+
+        if (modelPath == "" || texturePath == "") //  Testing Mode
+        {
+            modelPath = "Resources/Models/Croissant/croissant_01_L0.obj";
+            texturePath = "Resources/Models/Croissant/croissant_01_L0_BaseColor.png";
+        }
+
         initWindow();
         initVulkan();
         mainLoop();
@@ -240,6 +252,9 @@ private:
     bool framebufferResized = false;
 
     unsigned int currentFrame;
+
+    std::string modelPath;
+    std::string texturePath;
 
     void initWindow()
     {
@@ -1592,7 +1607,7 @@ private:
     void createTextureImage()
     {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
@@ -1896,7 +1911,7 @@ private:
         std::vector<tinyobj::material_t> materials;
         std::string warn, err;
 
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str()))
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str()))
         {
             throw std::runtime_error(warn + err);
         }

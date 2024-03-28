@@ -1,13 +1,18 @@
 #include "VulkanRenderer.h"
+#include <string>
 
 
-int main() {
+int main()
+{
+
     VulkanRenderer app;
 
-    try {
+    try 
+    {
         app.run();
     }
-    catch (const std::exception& e) {
+    catch (const std::exception& e) 
+    {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
