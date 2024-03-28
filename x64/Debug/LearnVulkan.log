@@ -1,0 +1,3 @@
+﻿  main.cpp
+C:\Users\lewin\Documents\Vulkan Learn\LearnVulkan\VulkanRenderer.h(1377,27): warning C4018: '<': signed/unsigned mismatch
+  LearnVulkan.vcxproj -> C:\Users\lewin\Documents\Vulkan Learn\LearnVulkan\x64\Debug\LearnVulkan.exe
