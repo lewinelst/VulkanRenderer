@@ -171,21 +171,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="stb_implementation.cpp" />
-    <ClCompile Include="tiny_obj_implementation.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Shaders\shader.frag" />
     <None Include="Shaders\shader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Buffer.h" />
-    <ClInclude Include="CommandBuffer.h" />
-    <ClInclude Include="QueueFamily.h" />
-    <ClInclude Include="VulkanRenderer.h" />
-    <ClInclude Include="stb_image.h" />
-    <ClInclude Include="tiny_obj_loader.h" />
+    <ClInclude Include="Src\Buffer.h" />
+    <ClInclude Include="Src\CommandBuffer.h" />
+    <ClInclude Include="Src\QueueFamily.h" />
+    <ClInclude Include="Src\stb_image.h" />
+    <ClInclude Include="Src\tiny_obj_loader.h" />
+    <ClInclude Include="Src\VulkanRenderer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Src\Main.cpp" />
+    <ClCompile Include="Src\stb_implementation.cpp" />
+    <ClCompile Include="Src\tiny_obj_implementation.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
