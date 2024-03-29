@@ -179,6 +179,7 @@
     <ClInclude Include="Src\CommandBuffer.h" />
     <ClInclude Include="Src\QueueFamily.h" />
     <ClInclude Include="Src\stb_image.h" />
+    <ClInclude Include="Src\SwapChain.h" />
     <ClInclude Include="Src\tiny_obj_loader.h" />
     <ClInclude Include="Src\VulkanRenderer.h" />
   </ItemGroup>

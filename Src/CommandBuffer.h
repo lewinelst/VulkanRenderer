@@ -1,3 +1,6 @@
+#ifndef COMMAND_BUFFER_H
+#define COMMAND_BUFFER_H
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -44,7 +47,7 @@ namespace CommandBuffer
 
     static void createCommandPool(VkPhysicalDevice& physicalDevice, VkDevice& device, VkSurfaceKHR& surface, VkCommandPool& commandPool)
     {
-        QueueFamilyIndices queueFamilyIndicies = QueueFamily::findQueueFamilies(physicalDevice, surface);
+        QueueFamily::QueueFamilyIndices queueFamilyIndicies = QueueFamily::findQueueFamilies(physicalDevice, surface);
 
         VkCommandPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -136,4 +139,6 @@ namespace CommandBuffer
 
     }
 };
+
+#endif // COMMAND_BUFFER_H
 

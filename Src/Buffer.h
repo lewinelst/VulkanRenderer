@@ -1,3 +1,7 @@
+#ifndef BUFFER_H
+#define BUFFER_H
+
+
 #define GLFW_INCLUDE_VULKAN
 #define GLFW_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -70,3 +74,5 @@ namespace Buffer
 
     }
 };
+
+#endif // BUFFER_H

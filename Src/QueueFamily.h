@@ -1,24 +1,27 @@
+#ifndef QUEUE_FAMILY_H
+#define QUEUE_FAMILY_H
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include <optional>
 #include <vector>
 
-struct QueueFamilyIndices
-{
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
-};
-
 namespace QueueFamily
 {
+    struct QueueFamilyIndices
+    {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
 
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physicalDevice, VkSurfaceKHR& surface) {
-        QueueFamilyIndices indices;
+        bool isComplete() {
+            return graphicsFamily.has_value() && presentFamily.has_value();
+        }
+    };
+
+    QueueFamily::QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physicalDevice, VkSurfaceKHR& surface)
+    {
+        QueueFamily::QueueFamilyIndices indices;
 
         unsigned int queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
@@ -53,3 +56,5 @@ namespace QueueFamily
         return indices;
     }
 }
+
+#endif // QUEUE_FAMILY_H
