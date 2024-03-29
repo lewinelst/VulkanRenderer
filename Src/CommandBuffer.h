@@ -60,7 +60,7 @@ namespace CommandBuffer
         }
     }
 
-    static void createCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, VkCommandPool& commandPool, VkDevice& device, const int& maxFramesInFlight) // TODO: move to CommandBuffer.h (New function to create command Buffers)
+    static void createCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, VkCommandPool& commandPool, VkDevice& device, const int& maxFramesInFlight)
     {
         commandBuffers.resize(maxFramesInFlight);
         VkCommandBufferAllocateInfo allocInfo{};
@@ -76,7 +76,7 @@ namespace CommandBuffer
     }
 
     void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex, VkRenderPass& renderPass, std::vector<VkFramebuffer>& swapChainFramebuffers, VkExtent2D& swapChainExtent, 
-        VkPipeline& graphicsPipeline, VkBuffer& vertexBuffer, VkBuffer& indexBuffer, VkPipelineLayout& pipelineLayout, std::vector<VkDescriptorSet>& descriptorSets, unsigned int& currentFrame, std::vector<uint32_t>& indices) // TODO: move to CommandBuffer.h
+        VkPipeline& graphicsPipeline, VkBuffer& vertexBuffer, VkBuffer& indexBuffer, VkPipelineLayout& pipelineLayout, std::vector<VkDescriptorSet>& descriptorSets, unsigned int& currentFrame, std::vector<uint32_t>& indices)
     {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

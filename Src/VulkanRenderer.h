@@ -1065,25 +1065,7 @@ private:
 
     void cleanupSwapChain()
     {
-        vkDestroyImageView(device, colorImageView, nullptr);
-        vkDestroyImage(device, colorImage, nullptr);
-        vkFreeMemory(device, colorImageMemory, nullptr);
-
-        vkDestroyImageView(device, depthImageView, nullptr);
-        vkDestroyImage(device, depthImage, nullptr);
-        vkFreeMemory(device, depthImageMemory, nullptr);
-
-        for (int i = 0; i < swapChainFramebuffers.size(); i++)
-        {
-            vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
-        }
-
-        for (int i = 0; i < swapChainImageViews.size(); i++)
-        {
-            vkDestroyImageView(device, swapChainImageViews[i], nullptr);
-        }
-
-        vkDestroySwapchainKHR(device, swapChain, nullptr);
+        SwapChain::cleanupSwapChain(device, colorImageView, colorImage, colorImageMemory, depthImageView, depthImage, depthImageMemory, swapChainFramebuffers, swapChainImageViews, swapChain);
     }
 
     void recreateSwapChain()
@@ -1475,7 +1457,7 @@ private:
 
         if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
         {
-            throw std::runtime_error("failde to create texturen image view");
+            throw std::runtime_error("failed to create texture image view");
         }
 
         return imageView;
