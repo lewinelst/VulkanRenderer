@@ -13,7 +13,7 @@
 namespace Buffer
 {
 
-    static unsigned int findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDevice)
+    static unsigned int findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice& physicalDevice)
     {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -29,7 +29,7 @@ namespace Buffer
         throw std::runtime_error("failed to find suitable memory type");
     }
 
-    static void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, VkDevice device, VkPhysicalDevice physicalDevice)
+    static void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, VkDevice& device, VkPhysicalDevice& physicalDevice)
     {
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -58,7 +58,7 @@ namespace Buffer
         vkBindBufferMemory(device, buffer, bufferMemory, 0);
     }
 
-    static void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkQueue graphicsQueue, VkCommandPool commandPool, VkDevice device)
+    static void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkQueue& graphicsQueue, VkCommandPool& commandPool, VkDevice& device)
     {
         VkCommandBuffer commandBuffer = CommandBuffer::beginSingleTimeCommands(commandPool, device);
 
