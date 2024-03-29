@@ -19,7 +19,7 @@ namespace QueueFamily
         }
     };
 
-    QueueFamily::QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physicalDevice, VkSurfaceKHR& surface)
+    QueueFamily::QueueFamilyIndices findQueueFamilies(VkPhysicalDevice& physicalDevice, VkSurfaceKHR& surface)
     {
         QueueFamily::QueueFamilyIndices indices;
 
