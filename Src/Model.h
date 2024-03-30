@@ -7,16 +7,32 @@
 #include <string>
 
 #include "Vertex.h"
+#include "Buffer.h"
 
 #include "tiny_obj_loader.h"
 
-class Model
+class Model // TODO: Need to sort out destructor 
 {
 public:
     Model(std::string& modelPath);
 
-    std::vector<Vertex> vertices;
+    void destroyModel();
+
+    void createVertexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice, VkQueue& graphicsQueue, VkCommandPool& commandPool);
+    void createIndexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice, VkQueue& graphicsQueue, VkCommandPool& commandPool);
+
     std::vector<uint32_t> indices;
+
+    VkBuffer vertexBuffer = NULL;
+    VkBuffer indexBuffer = NULL;
+
+private:
+    VkDeviceMemory vertexBufferMemory = NULL;
+    VkDeviceMemory indexBufferMemory = NULL;
+
+    VkDevice* pDevice = nullptr;
+
+    std::vector<Vertex> vertices;
 };
 
 Model::Model(std::string& modelPath)
@@ -70,6 +86,59 @@ Model::Model(std::string& modelPath)
             indices.push_back(uniqueVertices[vertex]);
         }
     }
+}
+
+void Model::destroyModel()
+{
+    vkDestroyBuffer(*pDevice, indexBuffer, nullptr);
+    vkFreeMemory(*pDevice, indexBufferMemory, nullptr);
+
+    vkDestroyBuffer(*pDevice, vertexBuffer, nullptr);
+    vkFreeMemory(*pDevice, vertexBufferMemory, nullptr);
+}
+
+void Model::createVertexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice, VkQueue& graphicsQueue, VkCommandPool& commandPool)
+{
+    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    Buffer::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, device, physicalDevice);
+
+    void* data;
+    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, vertices.data(), (size_t)bufferSize);
+    vkUnmapMemory(device, stagingBufferMemory);
+
+    Buffer::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, device, physicalDevice);
+
+    Buffer::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, graphicsQueue, commandPool, device);
+
+    vkDestroyBuffer(device, stagingBuffer, nullptr);
+    vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+    pDevice = &device;
+}
+
+void Model::createIndexBuffer(VkDevice& device, VkPhysicalDevice& physicalDevice, VkQueue& graphicsQueue, VkCommandPool& commandPool)
+{
+    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    Buffer::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, device, physicalDevice);
+
+    void* data;
+    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, indices.data(), (size_t)bufferSize);
+    vkUnmapMemory(device, stagingBufferMemory);
+
+    Buffer::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, device, physicalDevice);
+
+    Buffer::copyBuffer(stagingBuffer, indexBuffer, bufferSize, graphicsQueue, commandPool, device);
+
+    vkDestroyBuffer(device, stagingBuffer, nullptr);
+    vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
 #endif // MODEL_H
