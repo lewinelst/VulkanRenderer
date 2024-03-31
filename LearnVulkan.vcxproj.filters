@@ -16,6 +16,12 @@
     <Filter Include="Source Files\Shaders">
       <UniqueIdentifier>{41d5be9a-fe33-425c-9846-4070d3f41341}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Namespaces">
+      <UniqueIdentifier>{ab852961-d913-417d-b70e-6197ff38d9cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Classes">
+      <UniqueIdentifier>{ee298339-4699-49a0-a69b-d2add984129b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\shader.frag">
@@ -26,15 +32,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Src\Buffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\CommandBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\QueueFamily.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Src\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -44,23 +41,32 @@
     <ClInclude Include="Src\VulkanRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\SwapChain.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Src\Buffer.h">
+      <Filter>Header Files\Namespaces</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Model.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\Vertex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\Texture.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Src\CommandBuffer.h">
+      <Filter>Header Files\Namespaces</Filter>
     </ClInclude>
     <ClInclude Include="Src\Image.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Classes</Filter>
     </ClInclude>
     <ClInclude Include="Src\ImageView.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Model.h">
+      <Filter>Header Files\Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\QueueFamily.h">
+      <Filter>Header Files\Namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\SwapChain.h">
+      <Filter>Header Files\Namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Texture.h">
+      <Filter>Header Files\Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Vertex.h">
+      <Filter>Header Files\Classes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

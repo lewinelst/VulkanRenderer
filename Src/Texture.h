@@ -55,8 +55,10 @@ Texture::Texture(std::string texturePath, VkDevice& device, VkPhysicalDevice& ph
     vkFreeMemory(device, stagingBufferMemory, nullptr);
 
     textureImage->generateMipMaps(VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels, physicalDevice, device, commandPool, graphicsQueue);
-
     textureImage->createImageView(VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+
+    createTextureSampler(device, physicalDevice);
+
 }
 
 void Texture::destroyTexture()

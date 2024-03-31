@@ -14,7 +14,7 @@
 class Model
 {
 public:
-    Model(std::string& modelPath);
+    Model(std::string& modelPath, VkDevice& device, VkPhysicalDevice& physicalDevice, VkQueue& graphicsQueue, VkCommandPool& commandPool);
 
     void destroyModel();
 
@@ -35,7 +35,7 @@ private:
     std::vector<Vertex> vertices;
 };
 
-Model::Model(std::string& modelPath)
+Model::Model(std::string& modelPath, VkDevice& device, VkPhysicalDevice& physicalDevice, VkQueue& graphicsQueue, VkCommandPool& commandPool)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -86,6 +86,9 @@ Model::Model(std::string& modelPath)
             indices.push_back(uniqueVertices[vertex]);
         }
     }
+
+    createVertexBuffer(device, physicalDevice, graphicsQueue, commandPool);
+    createIndexBuffer(device, physicalDevice, graphicsQueue, commandPool);
 }
 
 void Model::destroyModel()
