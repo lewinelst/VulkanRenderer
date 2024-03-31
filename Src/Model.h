@@ -11,7 +11,7 @@
 
 #include "tiny_obj_loader.h"
 
-class Model // TODO: Need to sort out destructor 
+class Model
 {
 public:
     Model(std::string& modelPath);

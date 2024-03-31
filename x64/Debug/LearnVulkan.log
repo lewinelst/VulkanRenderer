@@ -1,4 +1,3 @@
 ﻿  Main.cpp
 C:\Users\lewin\Documents\Vulkan Learn\LearnVulkan\Src\Buffer.h(25,27): warning C4018: '<': signed/unsigned mismatch
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   LearnVulkan.vcxproj -> C:\Users\lewin\Documents\Vulkan Learn\LearnVulkan\x64\Debug\LearnVulkan.exe

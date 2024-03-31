@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 #include "QueueFamily.h"
+#include "Image.h"
 
 struct SwapChainSupportDetails
 {
@@ -160,16 +161,10 @@ namespace SwapChain
         swapChainExtent = extent;
     }
 
-    static void cleanupSwapChain(VkDevice& device, VkImageView& colorImageView, VkImage& colorImage, VkDeviceMemory& colorImageMemory, VkImageView& depthImageView, 
-        VkImage& depthImage, VkDeviceMemory& depthImageMemory, std::vector<VkFramebuffer>& swapChainFramebuffers, std::vector<VkImageView>& swapChainImageViews, VkSwapchainKHR& swapChain)
+    static void cleanupSwapChain(VkDevice& device, Image& colorImage, Image& depthImage, std::vector<VkFramebuffer>& swapChainFramebuffers, std::vector<VkImageView>& swapChainImageViews, VkSwapchainKHR& swapChain)
     {
-        vkDestroyImageView(device, colorImageView, nullptr);
-        vkDestroyImage(device, colorImage, nullptr);
-        vkFreeMemory(device, colorImageMemory, nullptr);
-
-        vkDestroyImageView(device, depthImageView, nullptr);
-        vkDestroyImage(device, depthImage, nullptr);
-        vkFreeMemory(device, depthImageMemory, nullptr);
+        colorImage.destroyImage();
+        depthImage.destroyImage();
 
         for (int i = 0; i < swapChainFramebuffers.size(); i++)
         {
