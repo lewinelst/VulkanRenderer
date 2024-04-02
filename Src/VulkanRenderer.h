@@ -127,12 +127,7 @@ private:
 
     VkSurfaceKHR surface;
 
-    VkSwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
-    std::vector<VkImageView> swapChainImageViews;
-    std::vector<VkFramebuffer> swapChainFramebuffers;
+    std::unique_ptr<SwapChain> swapChain;
 
     VkRenderPass renderPass;
     VkDescriptorSetLayout descriptorSetLayout;
@@ -158,11 +153,6 @@ private:
     std::vector<VkFence> inFlightFences;
 
     std::unique_ptr<Texture> texture;
-
-    std::unique_ptr<Image> depthImage;
-
-    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
-    std::unique_ptr<Image> colorImage;
 
     bool framebufferResized = false;
 
@@ -202,13 +192,10 @@ private:
         pickPhysicalDevice();
         createLogicalDevice();
         createSwapChain();
-        createImageViews();
         createRenderPass();
         createDescriptorSetLayout();
         createGraphicsPipeline();
         createCommandPool();
-        createColorResources();
-        createDepthResources();
         createFramebuffers();
         createTextureImage();
         createModel();
@@ -373,7 +360,6 @@ private:
             if (isDeviceSuitable(device))
             {
                 physicalDevice = device;
-                msaaSamples = getMaxUsableSampleCount();
                 break;
             }
         }
@@ -394,7 +380,7 @@ private:
         bool swapChainAdequate = false;
         if (extensionsSupported)
         {
-            SwapChainSupportDetails swapChainSupport = SwapChain::querySwapChainSupport(device, surface);
+            SwapChainSupportDetails swapChainSupport = Device::querySwapChainSupport(device, surface);
             swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
         }
 
@@ -481,7 +467,7 @@ private:
 
     void createSwapChain()
     {
-        SwapChain::createSwapChain(physicalDevice, surface, device, swapChain, window, swapChainImages, swapChainImageFormat, swapChainExtent);
+        swapChain = std::make_unique<SwapChain>(physicalDevice, surface, device, window);
     }
 
     std::vector<const char*> getRequiredExtensions()
@@ -547,17 +533,6 @@ private:
         }
     }
 
-    void createImageViews()
-    {
-        swapChainImageViews.resize(swapChainImages.size());
-
-        for (uint32_t i = 0; i < swapChainImages.size(); i++)
-        {
-            swapChainImageViews[i] = ImageView::createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1, device);
-        }
-
-    }
-
     void createGraphicsPipeline()
     {
 
@@ -603,14 +578,14 @@ private:
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = (float)swapChainExtent.width;
-        viewport.height = (float)swapChainExtent.height;
+        viewport.width = (float)swapChain->swapChainExtent.width;
+        viewport.height = (float)swapChain->swapChainExtent.height;
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
         VkRect2D scissor{};
         scissor.offset = { 0, 0 };
-        scissor.extent = swapChainExtent;
+        scissor.extent = swapChain->swapChainExtent;
 
         std::vector<VkDynamicState> dynamicStates =
         {
@@ -644,7 +619,7 @@ private:
         VkPipelineMultisampleStateCreateInfo multisampling{};
         multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampling.sampleShadingEnable = VK_FALSE;
-        multisampling.rasterizationSamples = msaaSamples;
+        multisampling.rasterizationSamples = swapChain->msaaSamples;
         multisampling.minSampleShading = 1.0f; // optional 
         multisampling.pSampleMask = nullptr; // optional
         multisampling.alphaToCoverageEnable = VK_FALSE; // optional 
@@ -765,8 +740,8 @@ private:
     void createRenderPass()
     {
         VkAttachmentDescription colorAttachment{};
-        colorAttachment.format = swapChainImageFormat;
-        colorAttachment.samples = msaaSamples;
+        colorAttachment.format = swapChain->swapChainImageFormat;
+        colorAttachment.samples = swapChain->msaaSamples;
 
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -782,7 +757,7 @@ private:
         colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkAttachmentDescription colorAttachmentResolve{};
-        colorAttachmentResolve.format = swapChainImageFormat;
+        colorAttachmentResolve.format = swapChain->swapChainImageFormat;
         colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
         colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -796,8 +771,8 @@ private:
         colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkAttachmentDescription depthAttachment{};
-        depthAttachment.format = findDepthFormat();
-        depthAttachment.samples = msaaSamples;
+        depthAttachment.format = swapChain->findDepthFormat();
+        depthAttachment.samples = swapChain->msaaSamples;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -844,31 +819,7 @@ private:
 
     void createFramebuffers()
     {
-        swapChainFramebuffers.resize(swapChainImageViews.size());
-
-        for (unsigned int i = 0; i < swapChainImageViews.size(); i++)
-        {
-            std::array<VkImageView, 3> attachments =
-            {
-               colorImage->imageView,
-               depthImage->imageView,
-               swapChainImageViews[i]
-            };
-
-            VkFramebufferCreateInfo framebufferInfo{};
-            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = renderPass;
-            framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-            framebufferInfo.pAttachments = attachments.data();
-            framebufferInfo.width = swapChainExtent.width;
-            framebufferInfo.height = swapChainExtent.height;
-            framebufferInfo.layers = 1;
-
-            if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS)
-            {
-                throw std::runtime_error("failed to create framebuffer");
-            }
-        }
+        swapChain->createFramebuffers(renderPass);
     }
 
     void createCommandPool() 
@@ -886,13 +837,13 @@ private:
         vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         unsigned int imageIndex;
-        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(device, swapChain->swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
         updateUniformBuffer(currentFrame);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
-            recreateSwapChain();
+            swapChain->recreateSwapChain(physicalDevice, surface, device, window, renderPass);
             return;
         } 
         else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -904,7 +855,7 @@ private:
         vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
         vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-        CommandBuffer::recordCommandBuffer(commandBuffers[currentFrame], imageIndex, renderPass, swapChainFramebuffers, swapChainExtent, graphicsPipeline, model->vertexBuffer, model->indexBuffer, pipelineLayout, descriptorSets, currentFrame, model->indices);
+        CommandBuffer::recordCommandBuffer(commandBuffers[currentFrame], imageIndex, renderPass, swapChain->swapChainFramebuffers, swapChain->swapChainExtent, graphicsPipeline, model->vertexBuffer, model->indexBuffer, pipelineLayout, descriptorSets, currentFrame, model->indices);
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -933,7 +884,7 @@ private:
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
 
-        VkSwapchainKHR swapChains[] = { swapChain };
+        VkSwapchainKHR swapChains[] = { swapChain->swapChain };
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
         presentInfo.pImageIndices = &imageIndex;
@@ -944,7 +895,7 @@ private:
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized)
         {
             framebufferResized = false;
-            recreateSwapChain();
+            swapChain->recreateSwapChain(physicalDevice, surface, device, window, renderPass);
         }
         else if (result != VK_SUCCESS)
         {
@@ -981,27 +932,7 @@ private:
 
     void cleanupSwapChain()
     {
-        SwapChain::cleanupSwapChain(device, *colorImage, *depthImage, swapChainFramebuffers, swapChainImageViews, swapChain);
-    }
-
-    void recreateSwapChain()
-    {
-        int width = 0, height = 0;
-        glfwGetFramebufferSize(window, &width, &height);
-        while (width == 0 || height == 0)
-        {
-            glfwGetFramebufferSize(window, &width, &height);
-            glfwWaitEvents();
-        }
-        vkDeviceWaitIdle(device);
-
-        cleanupSwapChain();
-
-        createSwapChain();
-        createImageViews();
-        createColorResources();
-        createDepthResources();
-        createFramebuffers();
+        swapChain->cleanupSwapChain();
     }
 
     void createDescriptorSetLayout()
@@ -1064,7 +995,7 @@ private:
 
         ubo.view = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+        ubo.proj = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float)swapChain->swapChainExtent.height, 0.1f, 10.0f);
 
         ubo.proj[1][1] *= -1;
 
@@ -1151,42 +1082,6 @@ private:
         texture = std::make_unique<Texture>(texturePath, device, physicalDevice, commandPool, graphicsQueue);
     }
 
-    void createDepthResources()
-    {
-        VkFormat depthFormat = findDepthFormat();
-        depthImage = std::make_unique<Image>(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, device, physicalDevice);
-        depthImage->createImageView(VK_IMAGE_ASPECT_DEPTH_BIT, 1);
-    }
-
-    VkFormat findSupportedFormat(const std::vector<VkFormat>& candididates, VkImageTiling  tiling, VkFormatFeatureFlags features)
-    {
-        for (VkFormat format : candididates)
-        {
-            VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
-
-            if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
-            {
-                return format;
-            }
-            else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
-            {
-                return format;
-            }
-        }
-
-        throw std::runtime_error("failed to find supported format");
-    }
-
-    VkFormat findDepthFormat()
-    {
-        return findSupportedFormat(
-            { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-        );
-    }
-
     bool hasStencilComponent(VkFormat format)
     {
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT; 
@@ -1195,31 +1090,5 @@ private:
     void createModel()
     {
         model = std::make_unique<Model>(modelPath, device, physicalDevice, graphicsQueue, commandPool);
-    }
-
-    VkSampleCountFlagBits getMaxUsableSampleCount()
-    {
-        VkPhysicalDeviceProperties physicalDeviceProperties;
-        vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-
-        VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-
-        if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
-        if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
-        if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
-        if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
-        if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
-        if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
-
-        return VK_SAMPLE_COUNT_1_BIT;
-    }
-
-    void createColorResources()
-    {
-        VkFormat colorFormat = swapChainImageFormat;
-
-        colorImage = std::make_unique<Image>(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, device, physicalDevice);
-        colorImage->createImageView(VK_IMAGE_ASPECT_COLOR_BIT, 1);
-
     }
 };

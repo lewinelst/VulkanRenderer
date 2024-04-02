@@ -177,6 +177,7 @@
   <ItemGroup>
     <ClInclude Include="Src\Buffer.h" />
     <ClInclude Include="Src\CommandBuffer.h" />
+    <ClInclude Include="Src\Device.h" />
     <ClInclude Include="Src\Image.h" />
     <ClInclude Include="Src\ImageView.h" />
     <ClInclude Include="Src\Model.h" />

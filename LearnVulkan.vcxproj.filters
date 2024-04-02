@@ -59,13 +59,16 @@
     <ClInclude Include="Src\QueueFamily.h">
       <Filter>Header Files\Namespaces</Filter>
     </ClInclude>
-    <ClInclude Include="Src\SwapChain.h">
-      <Filter>Header Files\Namespaces</Filter>
-    </ClInclude>
     <ClInclude Include="Src\Texture.h">
       <Filter>Header Files\Classes</Filter>
     </ClInclude>
     <ClInclude Include="Src\Vertex.h">
+      <Filter>Header Files\Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Device.h">
+      <Filter>Header Files\Namespaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\SwapChain.h">
       <Filter>Header Files\Classes</Filter>
     </ClInclude>
   </ItemGroup>
