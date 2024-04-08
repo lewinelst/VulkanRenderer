@@ -10,7 +10,9 @@ layout(location = 4) in vec3 lightPos;
 layout(location = 5) in vec3 viewPos;
 layout(location = 6) in vec3 lightColor;
 
-layout(binding = 1) uniform sampler2D texSampler;
+layout(binding = 1) uniform sampler2D baseColorSampler;
+
+layout(binding = 2) uniform sampler2D roughnessSampler;
 
 layout(location = 0) out vec4 outColor;
 
@@ -18,7 +20,7 @@ void main()
 {
     // 
 
-    vec3 color = texture(texSampler, fragTexCoord).rgb;
+    vec3 color = texture(baseColorSampler, fragTexCoord).rgb;
     // ambient
     vec3 ambient = 0.05 * color;
     // diffuse
@@ -33,7 +35,7 @@ void main()
  
     vec3 halfwayDir = normalize(lightDir + viewDir);  
     spec = pow(max(dot(normalNormalized, halfwayDir), 0.0), 32.0);
-    vec3 specular = vec3(0.05) * spec; 
+    vec3 specular = texture(roughnessSampler, fragTexCoord).rgb * spec; 
 
 	outColor = vec4(ambient + diffuse + specular, 1.0);
 

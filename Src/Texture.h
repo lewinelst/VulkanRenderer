@@ -8,7 +8,7 @@
 class Texture
 {
 public:
-	Texture(std::string texturePath, VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool commandPool, VkQueue& graphicsQueue);
+	Texture(std::string baseColorPath, VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool commandPool, VkQueue& graphicsQueue);
     void createTextureSampler(VkDevice& device, VkPhysicalDevice& physicalDevice);
     void destroyTexture();
 
@@ -21,10 +21,10 @@ public:
 private:
 };
 
-Texture::Texture(std::string texturePath, VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool commandPool, VkQueue& graphicsQueue)
+Texture::Texture(std::string baseColorPath, VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool commandPool, VkQueue& graphicsQueue)
 {
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load(baseColorPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 

@@ -94,13 +94,13 @@ public:
         std::cout << "Enter the path to the obj file (Leave blank for testing): " << std::endl;
         std::getline(std::cin, modelPath);
         std::cout << "Enter the path to the texture file (Leave blank for testing): " << std::endl;
-        std::getline(std::cin, texturePath);
+        std::getline(std::cin, baseColorPath);
 
 
-        if (modelPath == "" || texturePath == "") //  Testing Mode
+        if (modelPath == "" || baseColorPath == "") //  Testing Mode
         {
             modelPath = "Resources/Models/Croissant/croissant_01_L0.obj";
-            texturePath = "Resources/Models/Croissant/croissant_01_L0_BaseColor.png";
+            baseColorPath = "Resources/Models/Croissant/croissant_01_L0_BaseColor.png";
         }
 
         initWindow();
@@ -152,14 +152,16 @@ private:
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
 
-    std::unique_ptr<Texture> texture;
+    std::unique_ptr<Texture> baseColorTexture;
+    std::unique_ptr<Texture> roughnessTexture;
 
     bool framebufferResized = false;
 
     unsigned int currentFrame;
 
     std::string modelPath;
-    std::string texturePath;
+    std::string baseColorPath;
+    std::string roughnessPath = "Resources/Models/Croissant/croissant_01_L0_Roughness.png";
 
     void initWindow()
     {
@@ -280,7 +282,9 @@ private:
 
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
-        texture->destroyTexture();
+        baseColorTexture->destroyTexture();
+
+        roughnessTexture->destroyTexture();
 
         vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
@@ -944,14 +948,21 @@ private:
         uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
         uboLayoutBinding.pImmutableSamplers = nullptr; // optional 
 
-        VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-        samplerLayoutBinding.binding = 1;
-        samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        samplerLayoutBinding.descriptorCount = 1;
-        samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-        samplerLayoutBinding.pImmutableSamplers = nullptr; // optional 
+        VkDescriptorSetLayoutBinding baseColorSamplerLayoutBinding{};
+        baseColorSamplerLayoutBinding.binding = 1;
+        baseColorSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        baseColorSamplerLayoutBinding.descriptorCount = 1;
+        baseColorSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        baseColorSamplerLayoutBinding.pImmutableSamplers = nullptr; // optional 
 
-        std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+        VkDescriptorSetLayoutBinding roughnessSamplerLayoutBinding{};
+        roughnessSamplerLayoutBinding.binding = 2;
+        roughnessSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        roughnessSamplerLayoutBinding.descriptorCount = 1;
+        roughnessSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        roughnessSamplerLayoutBinding.pImmutableSamplers = nullptr; // optional 
+
+        std::array<VkDescriptorSetLayoutBinding, 3> bindings = { uboLayoutBinding, baseColorSamplerLayoutBinding, roughnessSamplerLayoutBinding };
 
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1008,11 +1019,13 @@ private:
 
     void createDescriptorPool()
     {
-        std::array<VkDescriptorPoolSize, 2>  poolSizes{};
+        std::array<VkDescriptorPoolSize, 3>  poolSizes{};
         poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
         poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+        poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
         VkDescriptorPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1048,12 +1061,17 @@ private:
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(UniformBufferObject);
 
-            VkDescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = texture->textureImage->getImageView();
-            imageInfo.sampler = texture->textureSampler;
+            VkDescriptorImageInfo baseColorInfo{};
+            baseColorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            baseColorInfo.imageView = baseColorTexture->textureImage->getImageView();
+            baseColorInfo.sampler = baseColorTexture->textureSampler;
 
-            std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+            VkDescriptorImageInfo roughnessInfo{};
+            roughnessInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            roughnessInfo.imageView = roughnessTexture->textureImage->getImageView();
+            roughnessInfo.sampler = roughnessTexture->textureSampler;
+
+            std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
             descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[0].dstSet = descriptorSets[i];
@@ -1071,7 +1089,15 @@ private:
             descriptorWrites[1].dstArrayElement = 0;
             descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             descriptorWrites[1].descriptorCount = 1;
-            descriptorWrites[1].pImageInfo = &imageInfo;
+            descriptorWrites[1].pImageInfo = &baseColorInfo;
+
+            descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[2].dstSet = descriptorSets[i];
+            descriptorWrites[2].dstBinding = 2;
+            descriptorWrites[2].dstArrayElement = 0;
+            descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptorWrites[2].descriptorCount = 1;
+            descriptorWrites[2].pImageInfo = &roughnessInfo;
 
             vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
         }
@@ -1079,7 +1105,8 @@ private:
 
     void createTextureImage()
     {
-        texture = std::make_unique<Texture>(texturePath, device, physicalDevice, commandPool, graphicsQueue);
+        baseColorTexture = std::make_unique<Texture>(baseColorPath, device, physicalDevice, commandPool, graphicsQueue);
+        roughnessTexture = std::make_unique<Texture>(roughnessPath, device, physicalDevice, commandPool, graphicsQueue);
     }
 
     bool hasStencilComponent(VkFormat format)
