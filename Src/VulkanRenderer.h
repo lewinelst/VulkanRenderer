@@ -33,12 +33,19 @@
 #include "Model.h"
 #include "Texture.h"
 #include "ImageView.h"
-
+#include "Camera.h"
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
+
+std::unique_ptr<Camera> camera;
+bool firstMouse = true; // Keeps track of if mouse has been used yet
+float lastX = WIDTH / 2; // Keeps track of mouse since last frame
+float lastY = HEIGHT / 2;  // Keeps track of mouse since last frame
+float deltaTime = 0.0f; // Time between current frame and last frame
+float lastFrame = 0.0f; // Time of last frame
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -93,14 +100,17 @@ public:
 
         std::cout << "Enter the path to the obj file (Leave blank for testing): " << std::endl;
         std::getline(std::cin, modelPath);
-        std::cout << "Enter the path to the texture file (Leave blank for testing): " << std::endl;
+        std::cout << "Enter the path to the base color texture file (Leave blank for testing): " << std::endl;
         std::getline(std::cin, baseColorPath);
+        std::cout << "Enter the path to the roughness texture file (Leave blank for testing): " << std::endl;
+        std::getline(std::cin, roughnessPath);
 
 
-        if (modelPath == "" || baseColorPath == "") //  Testing Mode
+        if (modelPath == "" || baseColorPath == "" || roughnessPath == "") //  Testing Mode
         {
             modelPath = "Resources/Models/Croissant/croissant_01_L0.obj";
             baseColorPath = "Resources/Models/Croissant/croissant_01_L0_BaseColor.png";
+            roughnessPath = "Resources/Models/Croissant/croissant_01_L0_Roughness.png";
         }
 
         initWindow();
@@ -108,6 +118,26 @@ public:
         mainLoop();
         cleanup();
     }
+
+    void initWindow()
+    {
+        std::cout << "Begining Window Initialization" << std::endl;
+
+        glfwInit();
+
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+        glfwSetWindowUserPointer(window, this);
+        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+        glfwSetCursorPosCallback(window, mouse_callback);
+        glfwSetScrollCallback(window, scroll_callback);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+        std::cout << "Finished Window Initialization" << std::endl;
+    }
+
+
 
 private:
 
@@ -161,27 +191,39 @@ private:
 
     std::string modelPath;
     std::string baseColorPath;
-    std::string roughnessPath = "Resources/Models/Croissant/croissant_01_L0_Roughness.png";
-
-    void initWindow()
-    {
-        std::cout << "Begining Window Initialization" << std::endl;
-
-        glfwInit();
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-        glfwSetWindowUserPointer(window, this);
-        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-
-        std::cout << "Finished Window Initialization" << std::endl;
-    }
+    std::string roughnessPath;
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
     {
         auto app = reinterpret_cast<VulkanRenderer*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
+    }
+
+    static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+    {
+        float xpos = static_cast<float>(xposIn);
+        float ypos = static_cast<float>(yposIn);
+
+        if (firstMouse)
+        {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
+
+        float xoffset = xpos - lastX;
+        float yoffset = lastY - ypos;
+
+        lastX = xpos;
+        lastY = ypos;
+
+        camera->ProcessMouseMovement(xoffset, yoffset);
+    }
+
+
+    static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+    {
+        camera->ProcessMouseScroll(static_cast<float>(yoffset));
     }
 
     void initVulkan() 
@@ -206,6 +248,7 @@ private:
         createDescriptorSets();
         createCommandBuffers();
         createSyncObjects();
+        createCamera();
 
         std::cout << "Finished Vulkan Initialization" << std::endl;
     }
@@ -838,6 +881,10 @@ private:
 
     void drawFrame()
     {
+        float currentFrameTime = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrameTime - lastFrame;
+        lastFrame = currentFrameTime;
+
         vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         unsigned int imageIndex;
@@ -993,6 +1040,8 @@ private:
 
     void updateUniformBuffer(uint32_t currentImage)
     {
+        processInput(window);
+
         const glm::vec3 viewPos(2.0f, 2.0f, 2.0f);
 
         static auto startTime = std::chrono::high_resolution_clock::now();
@@ -1001,12 +1050,13 @@ private:
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
         UniformBufferObject ubo{};
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(270.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        ubo.model = glm::rotate(ubo.model, time * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.model = glm::scale(ubo.model, glm::vec3(0.4f, 0.4f, 0.4f)); // change model size here
 
-        ubo.view = glm::lookAt(viewPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = camera->GetViewMatrix();
 
-        ubo.proj = glm::perspective(glm::radians(45.0f), swapChain->swapChainExtent.width / (float)swapChain->swapChainExtent.height, 0.1f, 10.0f);
+        ubo.proj = glm::perspective(glm::radians(camera->Zoom), swapChain->swapChainExtent.width / (float)swapChain->swapChainExtent.height, 0.1f, 10.0f);
 
         ubo.proj[1][1] *= -1;
 
@@ -1117,5 +1167,26 @@ private:
     void createModel()
     {
         model = std::make_unique<Model>(modelPath, device, physicalDevice, graphicsQueue, commandPool);
+    }
+
+    void createCamera()
+    {
+        camera = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 0.0f));
+    }
+
+    void processInput(GLFWwindow* window)
+    {
+
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera->ProcessKeyboard(FORWARD, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera->ProcessKeyboard(BACKWARD, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera->ProcessKeyboard(LEFT, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera->ProcessKeyboard(RIGHT, deltaTime);
+
     }
 };
