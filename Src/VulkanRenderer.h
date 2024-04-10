@@ -1051,7 +1051,7 @@ private:
 
         UniformBufferObject ubo{};
         ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(270.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        ubo.model = glm::rotate(ubo.model, time * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        //ubo.model = glm::rotate(ubo.model, time * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.model = glm::scale(ubo.model, glm::vec3(0.4f, 0.4f, 0.4f)); // change model size here
 
         ubo.view = camera->GetViewMatrix();
@@ -1062,7 +1062,7 @@ private:
 
         ubo.lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
         ubo.viewPos = viewPos;
-        ubo.lightPos = glm::vec3(-1.0f, 1.0f, 1.0f);
+        ubo.lightPos = glm::vec3(2.0f, 2.0f, 1.0f);
 
         memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
     }

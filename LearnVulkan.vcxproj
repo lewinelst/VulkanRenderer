@@ -188,12 +188,14 @@
     <ClInclude Include="Src\Texture.h" />
     <ClInclude Include="Src\tiny_obj_loader.h" />
     <ClInclude Include="Src\Vertex.h" />
+    <ClInclude Include="Src\vk_mem_alloc.h" />
     <ClInclude Include="Src\VulkanRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Main.cpp" />
     <ClCompile Include="Src\stb_implementation.cpp" />
     <ClCompile Include="Src\tiny_obj_implementation.cpp" />
+    <ClCompile Include="Src\vk_mem_alloc_implementation.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
